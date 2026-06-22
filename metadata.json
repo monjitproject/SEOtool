@@ -1,0 +1,10 @@
+{
+  "name": "SuiteRank SEO Tool Platform",
+  "description": "An enterprise-grade all-in-one SEO and competitor analysis platform featuring Keyword Research, Domain Overview, Backlink Analytics, Site Audit, Rank Tracking, AI SEO Content Tools, and drag-and-drop PDF Report Builder.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
