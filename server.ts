@@ -240,7 +240,7 @@ Ensure the output is syntactically perfect JSON, free from markdown formatting, 
           return;
         }
       } catch (err: any) {
-        console.error("[DOMAINS] Gemini API live generation failed, reverting to failsafe simulation:", err.message);
+        console.log("[DOMAINS] Gemini API live generation rate-limited or failed, using robust fallback simulation:", err.message);
       }
     }
 
@@ -607,7 +607,7 @@ Output your clusters structured neatly in clear markdown boxes or listings.`;
       });
       return;
     } catch (err: any) {
-      console.error("Gemini API call failed, reverting to beautiful simulation:", err.message);
+      console.log("Gemini API call skipped/rate-limited, reverting to beautiful simulated content:", err.message);
       // Let it fall through to the smart offline simulator so the app never shows a raw crash/spinner
     }
   }

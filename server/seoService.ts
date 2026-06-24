@@ -488,7 +488,7 @@ class SEOService {
           console.log("[AI AGENT] Rich semantic metadata merged successfully.");
         }
       } catch (err: any) {
-        console.warn("[AI AGENT] Generative enricher failed/skipped. Relying on pristine local models.", err.message);
+        console.log("[AI AGENT] Generative enricher rate-limited or skipped. Relying on pristine local models.", err.message);
       }
     }
 

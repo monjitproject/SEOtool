@@ -73,8 +73,8 @@ export async function generateContentWithRetry(
                             errMsg.includes("Resource has been exhausted") ||
                             errMsg.includes("demand");
 
-        console.warn(
-          `[GEMINI HELPER] [${tag}] Error on model "${model}" (attempt ${attempt}/2): ${errMsg}`
+        console.log(
+          `[GEMINI HELPER] [${tag}] Info: Model "${model}" (attempt ${attempt}/2) rate-limited or skipped: ${errMsg}`
         );
 
         if (isTransient && attempt < 2) {

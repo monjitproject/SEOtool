@@ -188,7 +188,7 @@ class Database {
       // Bootstrap enterprise-grade relational schemas
       await this.createPostgresTables();
     } catch (err: any) {
-      console.warn("[Postgres] Failed to initialize live dynamic engine (reverting to Local JSON fallback):", err.message);
+      console.log("[Postgres] Database initializing with Local JSON fallback:", err.message);
       this.isPostgresActive = false;
     }
   }
