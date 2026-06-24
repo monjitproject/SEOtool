@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { toast } from "../lib/toast";
 import { 
   Search, 
   HelpCircle, 
@@ -443,6 +444,11 @@ export function TopicResearchView() {
             type="text" 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !loading && query.trim()) {
+                handleGenTopic();
+              }
+            }}
             placeholder="Search standard seed topics (e.g. cloud database, dropshipping, remote tools...)"
             className="w-full text-xs border border-gray-200 px-3 py-2.5 rounded focus:ring-1 focus:ring-purple-500 outline-none bg-[#f9fafb] text-[#111827] font-semibold"
           />
@@ -514,6 +520,7 @@ export function SeoContentTemplateView() {
   const [topic, setTopic] = useState("sustainable bamboo coffee mugs");
   const [country, setCountry] = useState("United States");
   const [loading, setLoading] = useState(false);
+  const [checkedTerms, setCheckedTerms] = useState<Record<string, boolean>>({});
 
   const [guidelines, setGuidelines] = useState({
     optimumWords: "1,850 - 2,100 words",
@@ -543,6 +550,7 @@ export function SeoContentTemplateView() {
           { term: "eco commerce carbon footprint offset", density: "2 times" }
         ]
       });
+      setCheckedTerms({});
       setLoading(false);
     }, 600);
   };
@@ -564,6 +572,11 @@ export function SeoContentTemplateView() {
               type="text" 
               value={topic} 
               onChange={(e) => setTopic(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !loading && topic.trim()) {
+                  handleGenerateTemplate();
+                }
+              }}
               placeholder="Primary SEO term to rank (e.g. keto diet plan, best remote work tool)"
               className="w-full text-xs border border-gray-200 px-3 py-2.5 rounded focus:ring-1 focus:ring-purple-500 outline-none bg-[#f9fafb] text-[#111827] font-semibold"
             />
@@ -657,17 +670,39 @@ export function SeoContentTemplateView() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 text-xs">
-                {guidelines.lsiKeywords.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-gray-55/40">
-                    <td className="py-3 font-semibold text-gray-900">{item.term}</td>
-                    <td className="py-3 text-right font-mono text-gray-600 font-bold">{item.density}</td>
-                    <td className="py-3 text-right">
-                      <button className="text-[10px] bg-gray-100 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 px-2.5 py-1 rounded font-bold transition-all inline-flex items-center gap-1 mr-0.5">
-                        <CheckCircle2 className="w-3 h-3" /> Mark Included
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {guidelines.lsiKeywords.map((item, idx) => {
+                  const isChecked = !!checkedTerms[item.term];
+                  return (
+                    <tr key={idx} className="hover:bg-gray-55/40">
+                      <td className="py-3 font-semibold text-gray-900">{item.term}</td>
+                      <td className="py-3 text-right font-mono text-gray-600 font-bold">{item.density}</td>
+                      <td className="py-3 text-right">
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setCheckedTerms(prev => {
+                              const next = { ...prev, [item.term]: !prev[item.term] };
+                              if (next[item.term]) {
+                                toast.success(`Keyword phrase "${item.term}" marked as included in content draft!`);
+                              } else {
+                                toast.info(`Keyword phrase "${item.term}" unmarked.`);
+                              }
+                              return next;
+                            });
+                          }}
+                          className={`text-[10px] px-2.5 py-1 rounded font-bold transition-all inline-flex items-center gap-1 cursor-pointer mr-0.5 ${
+                            isChecked 
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" 
+                              : "bg-gray-100 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600"
+                          }`}
+                        >
+                          <CheckCircle2 className={`w-3.5 h-3.5 ${isChecked ? "text-emerald-650" : ""}`} />
+                          <span>{isChecked ? "Included" : "Mark Included"}</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ActiveView } from "../types";
 import { 
   Home, 
@@ -22,20 +22,51 @@ import {
   Layout, 
   ChevronRight, 
   ChevronLeft,
-  FileCode
+  FileCode,
+  X,
+  ChevronDown
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 interface SidebarProps {
   activeView: ActiveView;
   setActiveView: (view: ActiveView) => void;
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
+  mobileOpen?: boolean;
+  setMobileOpen?: (open: boolean) => void;
 }
 
-export default function Sidebar({ activeView, setActiveView, collapsed, setCollapsed }: SidebarProps) {
+export default function Sidebar({ 
+  activeView, 
+  setActiveView, 
+  collapsed, 
+  setCollapsed,
+  mobileOpen = false,
+  setMobileOpen
+}: SidebarProps) {
   
   // Helper to check active status
   const isSelected = (view: ActiveView) => activeView === view;
+
+  // Track which accordion categories are expanded
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    "SEO": true,
+    "Site Performance": true,
+    "Competitive Analysis": true,
+    "Keyword Research": true,
+    "Content Ideas": true,
+    "Link Building": true,
+    "Reporting": true,
+  });
+
+  // Toggle category
+  const toggleGroup = (group: string) => {
+    setOpenGroups(prev => ({
+      ...prev,
+      [group]: !prev[group]
+    }));
+  };
 
   // Render a standard sub-item inside sidebar group
   const renderSubItem = (view: ActiveView, label: string) => {
@@ -43,7 +74,12 @@ export default function Sidebar({ activeView, setActiveView, collapsed, setColla
     return (
       <button
         id={`subitem-${view.replace("-", "_")}`}
-        onClick={() => setActiveView(view)}
+        onClick={() => {
+          setActiveView(view);
+          if (setMobileOpen) {
+            setMobileOpen(false);
+          }
+        }}
         className={`w-full text-left px-4 py-2 text-[14px] rounded-md font-medium transition-all duration-150 ${
           active 
             ? "bg-[#e5e7eb] text-[#111827] font-bold shadow-xs border-l-2 border-[#111827] pl-3.5" 
@@ -89,6 +125,17 @@ export default function Sidebar({ activeView, setActiveView, collapsed, setColla
 
   const activeGroup = getActiveGroup();
 
+  // Auto-expand group when activeView changes
+  useEffect(() => {
+    const activeGrp = getActiveGroup();
+    if (activeGrp !== "Account") {
+      setOpenGroups(prev => ({
+        ...prev,
+        [activeGrp]: true
+      }));
+    }
+  }, [activeView]);
+
   // Handle clicking left rail icon: switches to the primary view of that group
   const handleRailClick = (group: "SEO" | "Site Performance" | "Competitive Analysis" | "Keyword Research" | "Content Ideas" | "Link Building" | "Account") => {
     switch (group) {
@@ -114,13 +161,17 @@ export default function Sidebar({ activeView, setActiveView, collapsed, setColla
         setActiveView(ActiveView.Settings);
         break;
     }
+    setOpenGroups(prev => ({
+      ...prev,
+      [group]: true
+    }));
     if (collapsed) {
       setCollapsed(false);
     }
   };
 
-  return (
-    <div className="h-screen flex text-gray-800 border-r border-gray-200 select-none flex-shrink-0 relative">
+  const sidebarContent = (
+    <div className="h-full flex text-gray-800 bg-white select-none">
       
       {/* 1. LEFT NARROW ICON RAIL (High Fidelity styling like screenshot) */}
       <div className="w-[60px] bg-white border-r border-gray-150 flex flex-col items-center py-4 justify-between flex-shrink-0 z-20 shadow-xs">
@@ -253,71 +304,183 @@ export default function Sidebar({ activeView, setActiveView, collapsed, setColla
         <div className="flex-1 overflow-y-auto py-5 select-none scrollbar-none">
           
           {/* SEO SECTION */}
-          <div className="px-3 mb-5">
-            <span className="text-[11px] font-bold text-gray-800 uppercase tracking-widest pl-3.5 block mb-1.5">SEO</span>
-            <div className="space-y-0.5">
-              {renderSubItem(ActiveView.Dashboard, "Dashboard")}
-            </div>
+          <div className="px-3 mb-4">
+            <button 
+              onClick={() => toggleGroup("SEO")}
+              className="text-[11px] font-bold text-gray-800 uppercase tracking-widest pl-3.5 pr-2 py-1.5 flex items-center justify-between w-full hover:bg-gray-250/20 rounded-md transition-all cursor-pointer"
+            >
+              <span>SEO</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${openGroups["SEO"] ? "" : "-rotate-90"}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {openGroups["SEO"] && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="space-y-0.5 mt-1 overflow-hidden"
+                >
+                  {renderSubItem(ActiveView.Dashboard, "Dashboard")}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* SITE PERFORMANCE */}
-          <div className="px-3 mb-5">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 block mb-1.5">Site Performance</span>
-            <div className="space-y-0.5">
-              {renderSubItem(ActiveView.SiteAudit, "Site Audit")}
-              {renderSubItem(ActiveView.PositionTracking, "Position Tracking")}
-            </div>
+          <div className="px-3 mb-4">
+            <button 
+              onClick={() => toggleGroup("Site Performance")}
+              className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 pr-2 py-1.5 flex items-center justify-between w-full hover:bg-gray-250/20 rounded-md transition-all cursor-pointer"
+            >
+              <span>Site Performance</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${openGroups["Site Performance"] ? "" : "-rotate-90"}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {openGroups["Site Performance"] && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="space-y-0.5 mt-1 overflow-hidden"
+                >
+                  {renderSubItem(ActiveView.SiteAudit, "Site Audit")}
+                  {renderSubItem(ActiveView.PositionTracking, "Position Tracking")}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* COMPETITIVE ANALYSIS */}
-          <div className="px-3 mb-5">
-            <span className="text-[11px] font-bold text-gray-400 text-left uppercase tracking-widest pl-3.5 block mb-1.5">Competitive Analysis</span>
-            <div className="space-y-0.5">
-              {renderSubItem(ActiveView.DomainOverview, "Domain Overview")}
-              {renderSubItem(ActiveView.OrganicRankings, "Organic Rankings")}
-              {renderSubItem(ActiveView.TopPages, "Top Pages")}
-              {renderSubItem(ActiveView.CompetitorComparison, "Compare Domains")}
-              {renderSubItem(ActiveView.KeywordGap, "Keyword Gap")}
-              {renderSubItem(ActiveView.BacklinkGap, "Backlink Gap")}
-            </div>
+          <div className="px-3 mb-4">
+            <button 
+              onClick={() => toggleGroup("Competitive Analysis")}
+              className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 pr-2 py-1.5 flex items-center justify-between w-full hover:bg-gray-250/20 rounded-md transition-all cursor-pointer text-left"
+            >
+              <span className="truncate">Competitive Analysis</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${openGroups["Competitive Analysis"] ? "" : "-rotate-90"}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {openGroups["Competitive Analysis"] && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="space-y-0.5 mt-1 overflow-hidden"
+                >
+                  {renderSubItem(ActiveView.DomainOverview, "Domain Overview")}
+                  {renderSubItem(ActiveView.OrganicRankings, "Organic Rankings")}
+                  {renderSubItem(ActiveView.TopPages, "Top Pages")}
+                  {renderSubItem(ActiveView.CompetitorComparison, "Compare Domains")}
+                  {renderSubItem(ActiveView.KeywordGap, "Keyword Gap")}
+                  {renderSubItem(ActiveView.BacklinkGap, "Backlink Gap")}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* KEYWORD RESEARCH */}
-          <div className="px-3 mb-5">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 block mb-1.5">Keyword Research</span>
-            <div className="space-y-0.5">
-              {renderSubItem(ActiveView.KeywordOverview, "Keyword Overview")}
-              {renderSubItem(ActiveView.KeywordMagicTool, "Keyword Magic Tool")}
-            </div>
+          <div className="px-3 mb-4">
+            <button 
+              onClick={() => toggleGroup("Keyword Research")}
+              className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 pr-2 py-1.5 flex items-center justify-between w-full hover:bg-gray-250/20 rounded-md transition-all cursor-pointer"
+            >
+              <span>Keyword Research</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${openGroups["Keyword Research"] ? "" : "-rotate-90"}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {openGroups["Keyword Research"] && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="space-y-0.5 mt-1 overflow-hidden"
+                >
+                  {renderSubItem(ActiveView.KeywordOverview, "Keyword Overview")}
+                  {renderSubItem(ActiveView.KeywordMagicTool, "Keyword Magic Tool")}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* CONTENT IDEAS */}
-          <div className="px-3 mb-5">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 block mb-1.5">Content Ideas</span>
-            <div className="space-y-0.5">
-              {renderSubItem(ActiveView.AiSnsTools, "SEO Writing Assistant")}
-              {renderSubItem(ActiveView.TopicResearch, "Topic Research")}
-              {renderSubItem(ActiveView.SeoContentTemplate, "SEO Content Template")}
-            </div>
+          <div className="px-3 mb-4">
+            <button 
+              onClick={() => toggleGroup("Content Ideas")}
+              className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 pr-2 py-1.5 flex items-center justify-between w-full hover:bg-gray-250/20 rounded-md transition-all cursor-pointer"
+            >
+              <span>Content Ideas</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${openGroups["Content Ideas"] ? "" : "-rotate-90"}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {openGroups["Content Ideas"] && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="space-y-0.5 mt-1 overflow-hidden"
+                >
+                  {renderSubItem(ActiveView.AiSnsTools, "SEO Writing Assistant")}
+                  {renderSubItem(ActiveView.TopicResearch, "Topic Research")}
+                  {renderSubItem(ActiveView.SeoContentTemplate, "SEO Content Template")}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* LINK BUILDING */}
-          <div className="px-3 mb-5">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 block mb-1.5">Link Building</span>
-            <div className="space-y-0.5">
-              {renderSubItem(ActiveView.BacklinkAnalytics, "Backlink Analytics")}
-              {renderSubItem(ActiveView.BacklinkAudit, "Backlink Audit")}
-            </div>
+          <div className="px-3 mb-4">
+            <button 
+              onClick={() => toggleGroup("Link Building")}
+              className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 pr-2 py-1.5 flex items-center justify-between w-full hover:bg-gray-250/20 rounded-md transition-all cursor-pointer"
+            >
+              <span>Link Building</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${openGroups["Link Building"] ? "" : "-rotate-90"}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {openGroups["Link Building"] && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="space-y-0.5 mt-1 overflow-hidden"
+                >
+                  {renderSubItem(ActiveView.BacklinkAnalytics, "Backlink Analytics")}
+                  {renderSubItem(ActiveView.BacklinkAudit, "Backlink Audit")}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* EXTRA REPORTS */}
-          <div className="px-3 mb-5">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 block mb-1.5">Reporting</span>
-            <div className="space-y-0.5">
-              {renderSubItem(ActiveView.ReportsBuilder, "PDF Reports Builder")}
-              {renderSubItem(ActiveView.ProjectPlan, "SaaS Project Plan")}
-              {renderSubItem(ActiveView.EnterpriseMonitor, "Enterprise Engine")}
-            </div>
+          <div className="px-3 mb-4">
+            <button 
+              onClick={() => toggleGroup("Reporting")}
+              className="text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-3.5 pr-2 py-1.5 flex items-center justify-between w-full hover:bg-gray-250/20 rounded-md transition-all cursor-pointer"
+            >
+              <span>Reporting</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${openGroups["Reporting"] ? "" : "-rotate-90"}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {openGroups["Reporting"] && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="space-y-0.5 mt-1 overflow-hidden"
+                >
+                  {renderSubItem(ActiveView.ReportsBuilder, "PDF Reports Builder")}
+                  {renderSubItem(ActiveView.ProjectPlan, "SaaS Project Plan")}
+                  {renderSubItem(ActiveView.EnterpriseMonitor, "Enterprise Engine")}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
         </div>
@@ -336,5 +499,54 @@ export default function Sidebar({ activeView, setActiveView, collapsed, setColla
       </div>
 
     </div>
+  );
+
+  return (
+    <>
+      {/* Laptop and Desktop layout (visible on >= md) */}
+      <div className="hidden md:flex h-screen border-r border-gray-200 flex-shrink-0 relative">
+        {sidebarContent}
+      </div>
+
+      {/* Mobile Drawer wrapper with Backdrop (visible only when mobileOpen is true on mobile) */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop layer */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen && setMobileOpen(false)}
+              className="fixed inset-0 bg-black/55 backdrop-blur-xs cursor-pointer"
+            />
+
+            {/* Sidebar drawer panel */}
+            <motion.div 
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+              className="relative flex flex-col h-full w-[270px] bg-white shadow-2xl z-10"
+            >
+              {/* Close button at mobile top rail corner */}
+              <div className="absolute right-3 top-3 z-30">
+                <button 
+                  onClick={() => setMobileOpen && setMobileOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-gray-600 hover:text-gray-900"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Sidebar internals */}
+              <div className="flex-1 h-full overflow-hidden">
+                {sidebarContent}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

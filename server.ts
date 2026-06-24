@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { generateContentWithRetry } from "./server/geminiHelper.js";
 import { seoService } from "./server/seoService.js";
 import { cacheService } from "./server/cache.js";
 import { dbInstance } from "./server/db.js";
@@ -68,6 +69,179 @@ app.post("/api/seo/clear-cache", async (req, res) => {
 app.get("/api/seo/domain-overview", async (req, res) => {
   const domainQuery = (req.query.domain as string || "seotool.com").trim().toLowerCase().replace(/https?:\/\//, "").split("/")[0];
   const apiKey = process.env.GEMINI_API_KEY;
+
+  const cacheKey = `domain-overview:${domainQuery}`;
+  try {
+    const cachedData = await cacheService.get<any>(cacheKey);
+    if (cachedData) {
+      console.log(`[DOMAINS] Returning cached domain overview data for: ${domainQuery}`);
+      res.json(cachedData);
+      return;
+    }
+  } catch (cacheErr: any) {
+    console.warn("[DOMAINS] Cache retrieval failed:", cacheErr.message);
+  }
+
+  // 1. If Gemini API Key exists, use it to fetch real-world semantic metrics & live intelligence estimates
+  if (apiKey && apiKey !== "MY_GEMINI_API_KEY" && apiKey !== "") {
+    try {
+      console.log(`[DOMAINS] Querying live Gemini API to construct real domain SEO overview for: "${domainQuery}"`);
+      const ai = new GoogleGenAI({
+        apiKey: apiKey,
+        httpOptions: {
+          headers: {
+            "User-Agent": "aistudio-build",
+          },
+        },
+      });
+
+      const prompt = `You are an expert SEO Data Provider API.
+Perform dynamic research and analytics audit for the domain: "${domainQuery}".
+Produce a highly accurate, realistic, industry-aligned SEO analysis representing high-fidelity metrics for this domain.
+Search the web or use your pre-trained knowledge to obtain precise estimates of its organic traffic, authority score, backlinks, and rankings.
+The returned data MUST match this EXACT JSON structure. Ensure all fields are included with realistic values appropriate for the size and niche of "${domainQuery}".
+
+{
+  "domain": "${domainQuery}",
+  "aiVisibility": 55, // integer 0-100 indicating presence in generative AI searches
+  "mentions": "1.2K", // compact text format (e.g., 1.5K or 450)
+  "mentionsVal": 1200, // integer
+  "citedPages": "4.5K", // compact text format
+  "citedPagesVal": 4500, // integer
+  "aiPlacements": [
+    { "platform": "ChatGPT", "value": "110", "citedDocs": "3.2K" },
+    { "platform": "AI Overview", "value": "350", "citedDocs": "5.1K" },
+    { "platform": "AI Mode", "value": "85", "citedDocs": "1.9K" },
+    { "platform": "Gemini", "value": "120", "citedDocs": "620" }
+  ],
+  "authorityScore": 65, // integer 0-100
+  "authorityScoreLabel": "Very good", // e.g., Excellent (80+), Very good (60-79), Good (40-59), Fair (below 40)
+  "organicTraffic": 540000, // estimated monthly organic visits
+  "organicTrafficChange": 4.5, // monthly percentage change
+  "paidTraffic": 1200, // estimated monthly paid visits
+  "paidTrafficChange": 1.2, // monthly percentage change
+  "referringDomainsCount": 3200, // unique referring domains count
+  "referringDomainsChange": 2.1, // percentage change
+  "trafficSharePct": 15, // estimated percentage of niche traffic share (integer)
+  "organicKeywords": 185000, // organic keywords ranked count
+  "organicKeywordsChange": -1.2, // percentage change
+  "paidKeywords": 450, // total paid keywords count
+  "backlinksCount": 142000, // total backlink records
+  "backlinksChange": 6.8, // percentage change
+  "distributionByCountry": [
+    { "country": "Worldwide", "visibility": 55, "mentions": "1.2K", "pct": 100 },
+    { "country": "United States", "visibility": 40, "mentions": "800", "pct": 66.7 },
+    { "country": "India", "visibility": 25, "mentions": "200", "pct": 16.7 },
+    { "country": "United Kingdom", "visibility": 15, "mentions": "120", "pct": 10.0 }
+  ],
+  "topCitedSources": [
+    { "domain": "wikipedia.org", "mentions": 12 },
+    { "domain": "github.com", "mentions": 8 }
+  ],
+  "googleSerpPositionDistribution": [
+    { "category": "Organic", "pct": 85.0, "color": "#3b82f6" },
+    { "category": "AI Overviews", "pct": 8.5, "color": "#a855f7" },
+    { "category": "Other SERP Features", "pct": 6.5, "color": "#ec4899" }
+  ],
+  "trafficTrendData": [
+    { "date": "Oct 2024", "organicTraffic": 480000, "paidTraffic": 1000, "brandedTraffic": 120000 },
+    { "date": "Jan 2025", "organicTraffic": 500000, "paidTraffic": 1100, "brandedTraffic": 125000 },
+    { "date": "Apr 2025", "organicTraffic": 520000, "paidTraffic": 1200, "brandedTraffic": 130000 },
+    { "date": "Jul 2025", "organicTraffic": 510000, "paidTraffic": 1150, "brandedTraffic": 128000 },
+    { "date": "Oct 2025", "organicTraffic": 530000, "paidTraffic": 1250, "brandedTraffic": 132000 },
+    { "date": "Jan 2026", "organicTraffic": 550000, "paidTraffic": 1180, "brandedTraffic": 138000 },
+    { "date": "Apr 2026", "organicTraffic": 540000, "paidTraffic": 1200, "brandedTraffic": 135000 }
+  ],
+  "keywordsTrendData": [
+    { "date": "Oct 2024", "top3": 5000, "top4_10": 12000, "top11_20": 25000, "top21_50": 55000, "top51_100": 88000, "aiOverviews": 1200, "otherSerp": 2100 },
+    { "date": "Jan 2025", "top3": 5200, "top4_10": 12500, "top11_20": 26000, "top21_50": 56000, "top51_100": 90300, "aiOverviews": 1300, "otherSerp": 2200 },
+    { "date": "Apr 2025", "top3": 5500, "top4_10": 13000, "top11_20": 27000, "top21_50": 58000, "top51_100": 92100, "aiOverviews": 1400, "otherSerp": 2300 },
+    { "date": "Jul 2025", "top3": 5300, "top4_10": 12800, "top11_20": 26500, "top21_50": 57000, "top51_100": 91000, "aiOverviews": 1500, "otherSerp": 2400 },
+    { "date": "Oct 2025", "top3": 5600, "top4_10": 13200, "top11_20": 27500, "top21_50": 59000, "top51_100": 93500, "aiOverviews": 1600, "otherSerp": 2500 },
+    { "date": "Jan 2026", "top3": 5800, "top4_10": 13500, "top11_20": 28000, "top21_50": 60000, "top51_100": 95000, "aiOverviews": 1700, "otherSerp": 2600 },
+    { "date": "Apr 2026", "top3": 5900, "top4_10": 13800, "top11_20": 28500, "top21_50": 61000, "top51_100": 96000, "aiOverviews": 1800, "otherSerp": 2700 }
+  ],
+  "topOrganicKeywords": [
+    { "keyword": "organic term", "intent": "Informational", "position": 1, "volume": 15000, "cpc": 1.25, "trafficPct": 5.2 }
+  ],
+  "keywordIntentDistribution": [
+    { "intent": "Informational", "pct": 45.0, "count": "83K", "traffic": "240K" },
+    { "intent": "Navigational", "pct": 15.0, "count": "27K", "traffic": "81K" },
+    { "intent": "Commercial", "pct": 25.0, "count": "46K", "traffic": "135K" },
+    { "intent": "Transactional", "pct": 15.0, "count": "27K", "traffic": "81K" }
+  ],
+  "organicPositionDistribution": [
+    { "bucket": "1-3", "count": 5900 },
+    { "bucket": "4-10", "count": 13800 },
+    { "bucket": "11-20", "count": 28500 },
+    { "bucket": "21-50", "count": 61000 },
+    { "bucket": "51-100", "count": 96000 },
+    { "bucket": "SF", "count": 8500 }
+  ],
+  "mainOrganicCompetitors": [
+    { "domain": "competitor.com", "comLevel": 45, "commonKeywords": 12000, "totalKeywords": 85000, "traffic": 410000 }
+  ],
+  "backlinkRecords": [
+    { "referringPageTitle": "SEO Industry Insights", "referringPageUrl": "https://industrynews.com/seo", "anchorText": "link reference", "linkUrl": "https://${domainQuery}/", "type": "follow" }
+  ],
+  "followVsNofollow": {
+    "followPct": 82.5,
+    "followCount": "117K",
+    "nofollowPct": 17.5,
+    "nofollowCount": "25K"
+  },
+  "backlinkTypeBreakdown": {
+    "textPct": 85.0, "textCount": "120.7K",
+    "imagePct": 12.0, "imageCount": "17.0K",
+    "formPct": 1.0, "formCount": "1.4K",
+    "framePct": 2.0, "frameCount": "2.8K"
+  },
+  "topAnchors": [
+    { "anchor": "website", "domains": 450, "backlinks": 12000 }
+  ],
+  "referringDomains": [
+    { "domain": "referenceblog.net", "country": "United States", "ip": "104.24.42.1", "backlinks": 3500 }
+  ],
+  "indexedPages": [
+    { "title": "Home Page", "url": "https://www.${domainQuery}/", "domains": 120, "backlinks": 4500 }
+  ]
+}
+
+Ensure the output is syntactically perfect JSON, free from markdown formatting, notes, or explanations. Respond with ONLY the raw JSON string matching the keys exactly.`;
+
+      const response = await generateContentWithRetry(
+        ai,
+        prompt,
+        {
+          responseMimeType: "application/json",
+          systemInstruction: "You are an expert SEO data engineer designed to return accurate real-world analytical database records representation.",
+          temperature: 0.3,
+        },
+        "domain-overview"
+      );
+
+      const rawText = response?.text?.trim() || "{}";
+      const cleanJsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (cleanJsonMatch) {
+        const parsed = JSON.parse(cleanJsonMatch[0]);
+        // Update model attribution
+        parsed.isAiGenerated = true;
+        parsed.apiProvider = "Gemini LLM Real-Time Intelligence";
+        parsed.dataSource = "Web ground knowledge metrics";
+
+        try {
+          await cacheService.set(cacheKey, parsed, 86400); // cache for 24 hours
+        } catch (cacheSetErr: any) {
+          console.warn("[DOMAINS] Cache storage failed:", cacheSetErr.message);
+        }
+
+        res.json(parsed);
+        return;
+      }
+    } catch (err: any) {
+      console.error("[DOMAINS] Gemini API live generation failed, reverting to failsafe simulation:", err.message);
+    }
+  }
 
   // 1. Precise data mirroring the SEMrush screenshot for gktoday.in & seotool.com!
   if (domainQuery === "gktoday.in" || domainQuery === "seotool.com") {
@@ -412,30 +586,18 @@ Output your clusters structured neatly in clear markdown boxes or listings.`;
         },
       });
 
-      let response;
-      try {
-        response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
-          contents: prompt,
-          config: {
-            systemInstruction: systemInstruction,
-            temperature: 0.7,
-          },
-        });
-      } catch (firstErr: any) {
-        console.warn(`[AI AGENT] gemini-3.5-flash failed in seo-generate (${firstErr.message}). Retrying with fallback model gemini-3.1-flash-lite...`);
-        response = await ai.models.generateContent({
-          model: "gemini-3.1-flash-lite",
-          contents: prompt,
-          config: {
-            systemInstruction: systemInstruction,
-            temperature: 0.7,
-          },
-        });
-      }
+      const response = await generateContentWithRetry(
+        ai,
+        prompt,
+        {
+          systemInstruction: systemInstruction,
+          temperature: 0.7,
+        },
+        "seo-generate"
+      );
 
       res.json({
-        text: response.text || "No response text generated from Gemini model.",
+        text: response?.text || "No response text generated from Gemini model.",
         isMocked: false,
       });
       return;

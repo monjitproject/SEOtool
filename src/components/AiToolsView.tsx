@@ -192,6 +192,11 @@ export default function AiToolsView() {
                 type="text" 
                 value={additionalInstructions}
                 onChange={(e) => setAdditionalInstructions(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading && keywordInput.trim()) {
+                    handleGenerate();
+                  }
+                }}
                 placeholder="e.g. write in persuasive tone, mention free shipping..."
                 className="w-full bg-white border border-gray-205 py-2 px-3 text-xs font-semibold text-gray-700 rounded-lg outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20"
               />

@@ -29,11 +29,12 @@ import {
   TopicResearchView, 
   SeoContentTemplateView 
 } from "./components/ExtraSeoViews";
-import { Sparkles, Globe, Key, Link2, ShieldCheck } from "lucide-react";
+import { Sparkles, Globe, Key, Link2, ShieldCheck, Menu } from "lucide-react";
 
 export default function App() {
   const [activeView, setActiveView] = useState<ActiveView>(ActiveView.Dashboard);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Quick jump callback: e.g. clicking "Compare" jumps to CompetitorComparison
   const handleDomainOverviewCompare = (domain: string) => {
@@ -61,7 +62,7 @@ export default function App() {
 
       case ActiveView.KeywordMagicTool:
         // Pre-mounted with magic tool tab filter focus
-        return <KeywordResearchView initialKeyword="shoes discount" />;
+        return <KeywordResearchView initialKeyword="free fire" defaultTab="magic-tool" />;
 
       case ActiveView.KeywordGap:
         // Pre-mounted with gap tab filter focus
@@ -144,13 +145,25 @@ export default function App() {
         setActiveView={setActiveView} 
         collapsed={sidebarCollapsed} 
         setCollapsed={setSidebarCollapsed} 
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
       />
 
       {/* Main Workspace Frame container */}
       <div className="flex-1 flex flex-col h-full bg-[#f9fafb] overflow-hidden">
         
         {/* Top bar (Invisible or compact helper header) */}
-        <header className="h-16 bg-white border-b border-gray-200 px-8 flex items-center justify-between flex-shrink-0 print:hidden select-none shadow-xs gap-4 animate-in fade-in duration-300">
+        <header className="h-16 bg-white border-b border-gray-200 px-4 sm:px-8 flex items-center justify-between flex-shrink-0 print:hidden select-none shadow-xs gap-4 animate-in fade-in duration-300">
+          
+          {/* Mobile hamburger button */}
+          <button 
+            onClick={() => setMobileOpen(true)}
+            className="md:hidden p-2 -ml-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer"
+            title="Open Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
           <div className="flex items-center gap-6 flex-1 max-w-2xl">
             <div className="hidden md:flex items-center gap-2 flex-shrink-0">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest font-mono">WORKSPACE STATE:</span>
@@ -163,7 +176,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 flex-shrink-0">
-            <div className="flex items-center gap-2 border-r pr-4 border-gray-200">
+            <div className="hidden sm:flex items-center gap-2 border-r pr-4 border-gray-200">
               <div className="w-6 h-6 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-600 font-bold text-[10px] italic">US</div>
               <span className="text-xs font-semibold text-gray-505">United States</span>
             </div>
@@ -175,7 +188,7 @@ export default function App() {
         </header>
 
         {/* Dynamic content scroll frame area */}
-        <main className="flex-1 overflow-y-auto p-8 scrollbar-thin print:p-0">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8 scrollbar-thin print:p-0">
           <div className="max-w-7xl mx-auto h-full">
             {renderActiveViewContent()}
           </div>

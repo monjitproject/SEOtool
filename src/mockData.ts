@@ -9,6 +9,208 @@ import { KeywordRecord, BacklinkRecord, SiteAuditMetrics, PositionTrackItem, Dom
 export function generateKeywordsForQuery(query: string): KeywordRecord[] {
   const normQuery = (query || "seo").trim().toLowerCase();
   
+  if (normQuery === "free fire") {
+    // Exact matching Semrush data for "free fire"
+    const freeFireKeywords: KeywordRecord[] = [
+      {
+        id: "ff-1",
+        keyword: "free fire",
+        volume: 2240000,
+        kd: 86,
+        intent: "Transactional", // We will customize rendering in view to show I & T as in the image
+        cpc: 0.01,
+        competition: 0.01,
+        trend: [2240000, 2200000, 2180000, 2240000, 2210000, 2240000, 2200000, 2180000, 2240000, 2210000, 2240000, 2240000],
+        serpFeatures: ["Sitelinks", "Videos", "Images"],
+        results: 50610000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-2",
+        keyword: "free fire max",
+        volume: 1830000,
+        kd: 90,
+        intent: "Navigational", // Purple N in image
+        cpc: 0.01,
+        competition: 0.01,
+        trend: [1830000, 1800000, 1810000, 1830000, 1820000, 1830000, 1800000, 1810000, 1830000, 1820000, 1830000, 1830000],
+        serpFeatures: ["Sitelinks"],
+        results: 4120000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-3",
+        keyword: "free fire game",
+        volume: 1000000,
+        kd: 90,
+        intent: "Informational", // Blue I
+        cpc: 0.02,
+        competition: 0.1,
+        trend: [1000000, 980000, 950000, 1000000, 970000, 1000000, 980000, 950000, 1000000, 970000, 1000000, 1000000],
+        serpFeatures: ["Sitelinks", "People Also Ask"],
+        results: 2310000,
+        updatedDate: "4 weeks"
+      },
+      {
+        id: "ff-4",
+        keyword: "free fire name",
+        volume: 823000,
+        kd: 63,
+        intent: "Informational", // Blue I
+        cpc: 0.00,
+        competition: 0.01,
+        trend: [823000, 800000, 790000, 823000, 810000, 823000, 800000, 790000, 823000, 810000, 823000, 823000],
+        serpFeatures: ["Sitelinks"],
+        results: 1250000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-5",
+        keyword: "free fire nickname",
+        volume: 823000,
+        kd: 66,
+        intent: "Transactional", // Displayed as I and T in image
+        cpc: 0.00,
+        competition: 0.02,
+        trend: [823000, 810000, 820000, 823000, 815000, 823000, 810000, 820000, 823000, 815000, 823000, 823000],
+        serpFeatures: ["Sitelinks", "Images"],
+        results: 1610000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-6",
+        keyword: "garena free fire max redeem codes",
+        volume: 450000,
+        kd: 66,
+        intent: "Informational", // Blue I in image
+        cpc: 0.01,
+        competition: 0.01,
+        trend: [450000, 430000, 440500, 450000, 440000, 450000, 430000, 440500, 450000, 440000, 450000, 450000],
+        serpFeatures: ["Sitelinks", "Google News"],
+        results: 910000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-7",
+        keyword: "free fire india",
+        volume: 368000,
+        kd: 72,
+        intent: "Transactional", // Displays as I and T in image
+        cpc: 0.01,
+        competition: 0.01,
+        trend: [368000, 350000, 360000, 368000, 355000, 368000, 350000, 360000, 368000, 355000, 368000, 368000],
+        serpFeatures: ["Sitelinks", "Videos"],
+        results: 3200000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-8",
+        keyword: "free fire download",
+        volume: 301000,
+        kd: 74,
+        intent: "Informational", // Blue I
+        cpc: 0.01,
+        competition: 0.01,
+        trend: [301000, 290000, 295000, 301000, 298000, 301000, 290000, 295000, 301000, 298000, 301000, 301000],
+        serpFeatures: ["Sitelinks"],
+        results: 860000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-9",
+        keyword: "free fire free fire",
+        volume: 301000,
+        kd: 91,
+        intent: "Navigational", // Purple N
+        cpc: 0.28,
+        competition: 0.01,
+        trend: [301000, 280000, 301000, 301000, 290000, 301000, 280000, 301000, 301000, 290000, 301000, 301000],
+        serpFeatures: ["Sitelinks"],
+        results: 980000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-10",
+        keyword: "free fire name style",
+        volume: 301000,
+        kd: 62,
+        intent: "Informational", // Blue I
+        cpc: 0.00,
+        competition: 0.01,
+        trend: [301000, 295000, 299000, 301000, 300000, 301000, 295000, 299000, 301000, 300000, 301000, 301000],
+        serpFeatures: ["Sitelinks", "Images"],
+        results: 1100000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-11",
+        keyword: "free fire redeem code today",
+        volume: 246000,
+        kd: 70,
+        intent: "Transactional",
+        cpc: 0.05,
+        competition: 0.02,
+        trend: [246000, 240000, 246000, 246000, 246000, 246000, 220000, 246000, 246000, 246000, 246000, 246000],
+        serpFeatures: ["Sitelinks", "People Also Ask"],
+        results: 420000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-12",
+        keyword: "garena free fire",
+        volume: 246000,
+        kd: 88,
+        intent: "Navigational",
+        cpc: 0.01,
+        competition: 0.01,
+        trend: [246000, 240000, 246000, 246000, 246000, 246000, 220000, 246000, 246000, 246000, 246000, 246000],
+        serpFeatures: ["Sitelinks"],
+        results: 6200000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-13",
+        keyword: "free fire reward",
+        volume: 201000,
+        kd: 69,
+        intent: "Transactional",
+        cpc: 0.02,
+        competition: 0.01,
+        trend: [201000, 190000, 201000, 201000, 201000, 201000, 180000, 201000, 201000, 201000, 201000, 201000],
+        serpFeatures: ["Sitelinks"],
+        results: 510000,
+        updatedDate: "1 month"
+      },
+      {
+        id: "ff-14",
+        keyword: "free fire online play",
+        volume: 165000,
+        kd: 75,
+        intent: "Informational",
+        cpc: 0.01,
+        competition: 0.01,
+        trend: [165000, 160000, 165000, 165000, 165000, 165000, 150000, 165000, 165000, 165000, 165000, 165000],
+        serpFeatures: ["Sitelinks"],
+        results: 990000,
+        updatedDate: "4 weeks"
+      },
+      {
+        id: "ff-15",
+        keyword: "free fire mod apk",
+        volume: 135005,
+        kd: 78,
+        intent: "Navigational",
+        cpc: 0.01,
+        competition: 0.01,
+        trend: [135000, 130000, 135010, 135010, 135010, 135010, 120000, 135010, 135010, 135010, 135010, 135010],
+        serpFeatures: ["Sitelinks"],
+        results: 852000,
+        updatedDate: "4 weeks"
+      }
+    ];
+    return freeFireKeywords;
+  }
+
   const seedKeywords = [
     { suffix: "guide for beginners", volMultiplier: 2.2, kdAdd: -10, cpcRate: 1.2, intent: "Informational" as const },
     { suffix: "agency cost comparison", volMultiplier: 0.8, kdAdd: 15, cpcRate: 12.5, intent: "Commercial" as const },

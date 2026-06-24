@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from "react";
+import React, { useState } from "react";
+import { toast } from "../lib/toast";
 import { 
   FileText, 
   Layers, 
@@ -52,7 +53,7 @@ export default function ProjectPlanView() {
         "Users & Subscriptions (Credentials, team seats metadata, active checkout plan identifiers)",
         "Keyword Projects (Primary tracked target keywords, localize cities, device crawled types)",
         "Backlink Spider Indexes (Referrer authority weights, anchor string arrays, Attribute classifications)",
-        "Crawl Checks Logs (Scan sitemaps logs, failed items, category tags, site health indices)"
+        "Crawl Checks Logs (Scan sitemaps sitemaps, failed items, category tags, site health indices)"
       ]
     },
     {
@@ -68,6 +69,31 @@ export default function ProjectPlanView() {
       ]
     }
   ];
+
+  const [completedItems, setCompletedItems] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    sections.forEach((sec, idx) => {
+      sec.points.forEach((pt, pIdx) => {
+        if (pt.includes("(COMPLETE)")) {
+          initial[`${idx}-${pIdx}`] = true;
+        }
+      });
+    });
+    return initial;
+  });
+
+  const toggleItem = (secIdx: number, ptIdx: number, text: string) => {
+    const key = `${secIdx}-${ptIdx}`;
+    setCompletedItems(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      if (next[key]) {
+        toast.success(`Milestone completed: "${text.replace(" (COMPLETE)", "")}"`);
+      } else {
+        toast.info(`Milestone set to pending: "${text.replace(" (COMPLETE)", "")}"`);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -95,12 +121,29 @@ export default function ProjectPlanView() {
             </div>
 
             <ul className="space-y-2.5 font-sans">
-              {sec.points.map((pt, pIdx) => (
-                <li key={pIdx} className="flex gap-2 items-start text-xs text-gray-650 leading-relaxed">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#ff642d] mt-1.5 flex-shrink-0"></span>
-                  <span>{pt}</span>
-                </li>
-              ))}
+              {sec.points.map((pt, pIdx) => {
+                const isDone = !!completedItems[`${idx}-${pIdx}`];
+                return (
+                  <li 
+                    key={pIdx} 
+                    onClick={() => toggleItem(idx, pIdx, pt)}
+                    className="flex gap-2.5 items-start text-xs leading-relaxed group cursor-pointer select-none"
+                  >
+                    <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors mt-0.5 ${
+                      isDone 
+                        ? "bg-emerald-500 border-emerald-500 text-white" 
+                        : "border-gray-300 group-hover:border-[#ff642d] bg-white"
+                    }`}>
+                      {isDone && <span className="text-[10px] font-black leading-none">✓</span>}
+                    </span>
+                    <span className={`transition-all duration-150 ${
+                      isDone ? "line-through text-gray-400" : "text-gray-650 group-hover:text-gray-900"
+                    }`}>
+                      {pt}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
 
           </div>
@@ -112,7 +155,7 @@ export default function ProjectPlanView() {
         <Cpu className="w-5 h-5 text-orange-400 mt-0.5 flex-shrink-0 animate-pulse" />
         <div>
           <h4 className="text-xs font-bold text-orange-400">Architect Technical Note</h4>
-          <p className="text-[11px] text-gray-300 mt-1 leading-relaxed">
+          <p className="text-[11px] text-gray-350 mt-1 leading-relaxed">
             The platform's frontend routes, state variables and server side AI controllers are fully complete! This master blueprint guides database migration structures when transitioning code layouts into production servers.
           </p>
         </div>

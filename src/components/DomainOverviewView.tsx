@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { toast } from "../lib/toast";
 import { 
   Globe, 
   Search, 
@@ -30,7 +31,11 @@ import {
   BarChart as BarChartIcon,
   Filter,
   Check,
-  AlertTriangle
+  AlertTriangle,
+  Star,
+  Bookmark,
+  Trash2,
+  Flame
 } from "lucide-react";
 
 interface DomainOverviewProps {
@@ -86,10 +91,29 @@ export default function DomainOverviewView({ initialDomain = "SEOtool.com", onCo
   // Growth Trend Chart Hovers & Data
   const [hoveredTrendIndex, setHoveredTrendIndex] = useState<number | null>(null);
 
+  // New highly flexible interactive chart controllers
+  const [chartTrackerMetric, setChartTrackerMetric] = useState<"traffic" | "keywords" | "cost" | "authority">("traffic");
+  const [chartVisualMode, setChartVisualMode] = useState<"area" | "bar" | "line">("area");
+  const [chartTheme, setChartTheme] = useState<"purple" | "emerald" | "amber" | "blue">("purple");
+  const [starredDomains, setStarredDomains] = useState<string[]>(["w3schools.com", "nike.com"]);
+  const [recentSearches, setRecentSearches] = useState<string[]>(["w3schools.com", "nike.com", "adidas.com", "techcrunch.com"]);
+
   const trends6M = React.useMemo(() => {
     if (!data) return [];
-    const finalTraffic = data.organicTraffic;
-    const pctChange = data.organicTrafficChange || 0;
+    let baseValue = data.organicTraffic || 1200000;
+    let pctChange = data.organicTrafficChange || 0;
+    
+    if (chartTrackerMetric === "keywords") {
+      baseValue = data.organicKeywords || 250000;
+      pctChange = data.organicKeywordsChange || -12;
+    } else if (chartTrackerMetric === "cost") {
+      baseValue = Math.round((data.organicTraffic || 1200000) * 0.35);
+      pctChange = data.organicTrafficChange || 4;
+    } else if (chartTrackerMetric === "authority") {
+      baseValue = data.authorityScore || 85;
+      pctChange = 5;
+    }
+
     const monthNames = ["Jan 2026", "Feb 2026", "Mar 2026", "Apr 2026", "May 2026", "Jun 2026"];
     
     // Calculate past traffic points based on percentage changes
@@ -102,14 +126,18 @@ export default function DomainOverviewView({ initialDomain = "SEOtool.com", onCo
       
       const seedVal = (activeDomain.length + idx) % 5;
       const microVariance = (seedVal - 2) * 0.008;
-      const val = Math.round(finalTraffic * (factor + (idx === 5 ? 0 : microVariance)));
+      let val = Math.round(baseValue * (factor + (idx === 5 ? 0 : microVariance)));
       
+      if (chartTrackerMetric === "authority") {
+        val = Math.max(10, Math.min(100, Math.round(baseValue - (5 - idx) * 1.5)));
+      }
+
       return {
         month,
         traffic: val > 0 ? val : 1000
       };
     });
-  }, [data, activeDomain]);
+  }, [data, activeDomain, chartTrackerMetric]);
 
   // Pre-calculate chart metrics for elegant SVG plotting
   const chartConfig = React.useMemo(() => {
@@ -166,6 +194,13 @@ export default function DomainOverviewView({ initialDomain = "SEOtool.com", onCo
     const cleanDomain = domainQuery.trim().toLowerCase().replace(/https?:\/\//, "").split("/")[0];
     if (cleanDomain) {
       setActiveDomain(cleanDomain);
+      setRecentSearches(prev => {
+        const filtered = prev.filter(item => item !== cleanDomain);
+        return [cleanDomain, ...filtered].slice(0, 8);
+      });
+      toast.success(`Loaded metrics profile for "${cleanDomain}"!`);
+    } else {
+      toast.error("Please enter a valid domain to query.");
     }
   };
 
@@ -302,154 +337,348 @@ export default function DomainOverviewView({ initialDomain = "SEOtool.com", onCo
         </div>
       )}
 
-      {/* 2. Main Title Row with Domain Lookup & 6-Month Trend Chart */}
       <div id="main-title-lookup-card-container" className="max-w-[1400px] mx-auto mt-4">
-        <div id="main-title-lookup-card" className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs mb-6 text-left">
+        <div id="main-title-lookup-card" className="bg-white rounded-2xl border-2 border-purple-100 shadow-md mb-6 text-left overflow-hidden transition-all duration-300">
+          
+          {/* Subtle colored gradient strip at top of the card as a design feature */}
+          <div className="h-1.5 w-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500" />
           
           {/* Top segment: Title information & lookup input */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b border-gray-150 mb-5">
-            <div className="text-left flex-1">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-[28px] sm:text-[34px] font-bold font-sans text-gray-900 flex items-center gap-2">
-                  Domain Overview:
-                  <span className="text-[#ff642d] hover:underline font-extrabold flex items-center gap-1.5 transition-colors">
-                    {activeDomain}
+          <div className="p-6 pb-5 border-b border-gray-150">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+              <div className="text-left flex-1">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="bg-purple-100 text-purple-700 text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-purple-600 animate-pulse fill-purple-600" />
+                    LIVE TELEMETRY
                   </span>
-                </h1>
-                <a 
-                  href={`https://${activeDomain}`} 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors"
-                  title="Visit Live Domain"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
+                  
+                  <h1 className="text-2xl sm:text-3xl font-extrabold font-sans text-gray-900 flex items-center gap-2">
+                    Domain Overview:
+                    <span className="text-[#ff642d] hover:underline font-black flex items-center gap-1.5 transition-colors">
+                      {activeDomain}
+                    </span>
+                  </h1>
+
+                  <div className="flex items-center gap-1.5">
+                    {/* Star Favorite Bookmark Button */}
+                    <button 
+                      onClick={() => {
+                        if (starredDomains.includes(activeDomain)) {
+                          setStarredDomains(starredDomains.filter(d => d !== activeDomain));
+                          toast.success(`Removed "${activeDomain}" from favorites.`);
+                        } else {
+                          setStarredDomains([...starredDomains, activeDomain]);
+                          toast.success(`Starred "${activeDomain}" as your visual favorite!`);
+                        }
+                      }}
+                      className="p-2 bg-slate-50 hover:bg-amber-50 rounded-lg text-slate-400 hover:text-amber-500 transition-all border border-gray-100 cursor-pointer"
+                      title="Bookmark Domain"
+                    >
+                      <Star className={`w-4 h-4 ${starredDomains.includes(activeDomain) ? "fill-amber-400 text-amber-500" : ""}`} />
+                    </button>
+
+                    <a 
+                      href={`https://${activeDomain}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="p-2 bg-slate-50 hover:bg-purple-50 rounded-lg text-slate-400 hover:text-purple-600 transition-all border border-gray-100"
+                      title="Visit Live Domain"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5 max-w-2xl leading-relaxed">
+                  Real-time visibility ratings, organic footprints, paid CPC estimations, backlinks citation health, and traffic share divisions.
+                </p>
               </div>
-              <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                Explore absolute visibility ratings, organic footprint, paid CPC estimations, backlinks citation health, and traffic share divisions.
-              </p>
+
+              {/* Domain search controller */}
+              <div className="flex flex-col sm:flex-row items-stretch gap-2.5 sm:w-full lg:w-auto max-w-xl">
+                <div className="relative flex-1 sm:w-80">
+                  <input 
+                    type="text" 
+                    value={domainQuery}
+                    onChange={(e) => setDomainQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSearchTrigger(); }}
+                    placeholder="Search domain (e.g. adidas.com, nike.com)..."
+                    className="w-full bg-[#f9fafb] border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 pl-9 pr-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400 transition-shadow font-sans"
+                  />
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+                </div>
+                <button 
+                  id="analyze-domain-button"
+                  onClick={handleSearchTrigger}
+                  className="bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-colors shadow-xs hover:shadow-sm cursor-pointer whitespace-nowrap"
+                >
+                  Analyze Domain
+                </button>
+              </div>
             </div>
 
-            {/* Domain search controller */}
-            <div className="flex flex-col sm:flex-row items-stretch gap-2.5 sm:w-full lg:w-auto max-w-xl">
-              <div className="relative flex-1 sm:w-80">
-                <input 
-                  type="text" 
-                  value={domainQuery}
-                  onChange={(e) => setDomainQuery(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleSearchTrigger(); }}
-                  placeholder="Lookup another domain (e.g. techcrunch.com)..."
-                  className="w-full bg-[#f9fafb] border border-gray-300 rounded-lg text-xs font-semibold text-gray-800 pl-9 pr-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400 transition-shadow font-sans"
-                />
-                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+            {/* Suggestions & Recent lookups */}
+            <div className="mt-4 pt-4 border-t border-dashed border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="text-gray-400 font-bold mr-1.5 text-[11px]">Quick Switch:</span>
+                {["w3schools.com", "nike.com", "techcrunch.com", "github.com", "medium.com"].map((dom) => (
+                  <button
+                    key={dom}
+                    onClick={() => {
+                      setDomainQuery(dom);
+                      setActiveDomain(dom);
+                      toast.success(`Switched metrics view to ${dom}`);
+                    }}
+                    className={`px-2.5 py-1 rounded bg-slate-50 hover:bg-purple-50 border border-gray-200 hover:border-purple-300 transition-all font-semibold font-mono text-[10.5px] cursor-pointer ${activeDomain === dom ? "bg-purple-50 border-purple-300 text-purple-700 font-bold font-sans" : "text-gray-600"}`}
+                  >
+                    {dom}
+                  </button>
+                ))}
               </div>
-              <button 
-                id="analyze-domain-button"
-                onClick={handleSearchTrigger}
-                className="bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-colors shadow-xs hover:shadow-sm cursor-pointer whitespace-nowrap"
-              >
-                Analyze Domain
-              </button>
+
+              {/* History tags list */}
+              {recentSearches.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black text-gray-450 uppercase tracking-widest">History:</span>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {recentSearches.slice(0, 4).map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => {
+                          setDomainQuery(d);
+                          setActiveDomain(d);
+                          toast.success(`Restored query: ${d}`);
+                        }}
+                        className="text-[10px] font-semibold text-gray-500 hover:text-purple-600 hover:underline flex items-center font-mono bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200"
+                      >
+                        {d}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => {
+                        setRecentSearches([]);
+                        toast.info("Cleared queries lookup history.");
+                      }}
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                      title="Clear History"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Control Toolbar Center */}
+          <div className="px-6 py-3.5 bg-slate-50/50 border-b border-gray-150 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            
+            {/* Metric Mode Option */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="text-[10px] uppercase font-black text-gray-450 tracking-wider">Metrics:</span>
+              <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-gray-200 flex-wrap">
+                {[
+                  { id: "traffic", label: "Organic Traffic", flag: "📈" },
+                  { id: "keywords", label: "Estimated Keywords", flag: "🔑" },
+                  { id: "cost", label: "Est. Traffic Cost", flag: "💰" },
+                  { id: "authority", label: "Authority Score", flag: "🛡️" }
+                ].map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      setChartTrackerMetric(m.id as any);
+                      toast.info(`Switched visualizer metrics to ${m.label}.`);
+                    }}
+                    className={`px-3 py-1 bg-transparent rounded text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${chartTrackerMetric === m.id ? "bg-[#f3e8ff]! text-purple-700 shadow-2xs" : "text-gray-500 hover:text-gray-950"}`}
+                  >
+                    <span>{m.flag}</span>
+                    <span>{m.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Visual type, Palette switchers */}
+            <div className="flex flex-wrap items-center gap-5">
+              
+              {/* Type Switcher */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase font-black text-gray-450 tracking-wider">Chart Style:</span>
+                <div className="inline-flex bg-white p-1 rounded-lg border border-gray-200">
+                  {[
+                    { id: "area", label: "Spline Area" },
+                    { id: "bar", label: "Columns" },
+                    { id: "line", label: "Outline" }
+                  ].map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => {
+                        setChartVisualMode(v.id as any);
+                        toast.info(`Chart layout set to "${v.label}".`);
+                      }}
+                      className={`px-2 py-0.5 rounded text-[10px] font-extrabold cursor-pointer transition-all ${chartVisualMode === v.id ? "bg-purple-600 text-white shadow-xs" : "text-gray-400 hover:text-gray-750"}`}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Theme Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase font-black text-gray-450 tracking-wider">Theme Accent:</span>
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { id: "purple", color: "bg-purple-500", label: "Amethyst" },
+                    { id: "emerald", color: "bg-emerald-500", label: "Emerald" },
+                    { id: "amber", color: "bg-amber-500", label: "Autumngold" },
+                    { id: "blue", color: "bg-blue-600", label: "Cobalt" }
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        setChartTheme(t.id as any);
+                        toast.success(`Theme palette swapped: ${t.label}!`);
+                      }}
+                      className={`w-5 h-5 rounded-full ${t.color} border-2 transition-all cursor-pointer relative flex items-center justify-center ${chartTheme === t.id ? "border-slate-800 scale-110 shadow-xs" : "border-transparent opacity-80 hover:opacity-100"}`}
+                      title={t.label}
+                    >
+                      {chartTheme === t.id && (
+                        <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
           </div>
 
           {/* Bottom segment: Highly polished visual 6-Month Traffic Growth Trends chart */}
           {chartConfig && (
-            <div id="six-month-traffic-trend-section" className="pt-1">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div id="six-month-traffic-trend-section" className="p-6 bg-[#fafbff] border-t border-gray-150">
+              
+              {/* Main chart legend header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 bg-white p-4 rounded-xl border border-gray-150 shadow-2xs">
                 <div>
-                  <h4 className="text-xs font-extrabold text-gray-800 uppercase tracking-wider flex items-center gap-1.5 font-sans">
-                    <TrendingUp className={`w-3.5 h-3.5 ${data?.organicTrafficChange < 0 ? "text-red-500" : "text-emerald-500"}`} />
-                    6-MONTH TRAFFIC GROWTH TRENDS
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 font-sans">
+                    <TrendingUp className={`w-4 h-4 ${data?.organicTrafficChange < 0 ? "text-red-500" : "text-emerald-500"}`} />
+                    6-MONTH COMPREHENSIVE TREND TRACKER ({chartTrackerMetric.toUpperCase()})
                   </h4>
-                  <p className="text-[11px] text-gray-400 mt-0.5 leading-none font-medium">
-                    Estimated monthly organic visitor volume for {activeDomain} over the preceding 6 months
+                  <p className="text-[11px] text-gray-400 mt-1 leading-snug font-semibold select-none">
+                    Currently visualizing {chartTrackerMetric === "traffic" ? "estimated monthly visitors" : chartTrackerMetric === "keywords" ? "ranked keyword items count" : chartTrackerMetric === "cost" ? "monthly keyword spending worth" : "domain trust index score"} for {activeDomain}
                   </p>
                 </div>
                 
-                {/* Micro indicators */}
+                {/* Performance Indicators */}
                 <div className="flex items-center gap-2.5">
-                  <div className="bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1 text-[11px] font-sans">
-                    <span className="text-gray-400 font-bold">Growth Rate:</span>
-                    <span id="six-month-growth-rate-badge" className={`font-black font-mono ml-1.5 ${data?.organicTrafficChange < 0 ? "text-red-500" : "text-emerald-600"}`}>
+                  <div className="bg-slate-100/70 border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] font-sans">
+                    <span className="text-gray-550 font-extrabold block text-[10px] uppercase tracking-wider leading-none">Change Rate</span>
+                    <span id="six-month-growth-rate-badge" className={`font-black font-mono mt-1 block text-sm ${data?.organicTrafficChange < 0 ? "text-red-500" : "text-emerald-600"}`}>
                       {data?.organicTrafficChange < 0 ? "" : "+"}{data?.organicTrafficChange}%
                     </span>
                   </div>
-                  <div className="bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1 text-[11px] font-sans">
-                    <span className="text-gray-400 font-bold">Monthly Average:</span>
-                    <span className="font-extrabold text-slate-800 font-mono ml-1.5">
+                  <div className="bg-slate-100/70 border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] font-sans">
+                    <span className="text-gray-550 font-extrabold block text-[10px] uppercase tracking-wider leading-none">Metric Average</span>
+                    <span className="font-black text-slate-850 font-mono mt-1 block text-sm">
+                      {chartTrackerMetric === "cost" ? "$" : ""}
                       {Math.round(trends6M.reduce((sum: number, item: any) => sum + item.traffic, 0) / 6).toLocaleString()}
+                      {chartTrackerMetric === "authority" ? "" : ""}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Grid content */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-5 items-stretch">
-                {/* Left Mini Metric Highlights card */}
-                <div id="six-month-stats-card" className="bg-[#f9fafb] border border-gray-150 p-4 rounded-xl flex flex-col justify-between min-h-[145px] md:col-span-1">
-                  <div className="space-y-3">
+              {/* Main section grid: Left Stats, Middle SVG Graph, Right AI recommendations Checklist */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                
+                {/* Column A: Left Mini Metric Highlights card (3/12 cols) */}
+                <div id="six-month-stats-card" className="bg-gradient-to-br from-slate-900 to-slate-950 text-white p-5 rounded-2xl flex flex-col justify-between min-h-[165px] lg:col-span-3 shadow-xs font-sans">
+                  <div className="space-y-4">
                     <div>
-                      <span className="text-[9px] uppercase font-black text-gray-400 block leading-none tracking-widest">Growth Peak</span>
-                      <span className="text-base font-extrabold font-mono text-gray-900 mt-1 block">
+                      <span className="text-[9px] uppercase font-black text-slate-405 block leading-none tracking-widest">Growth Peak</span>
+                      <span className="text-xl font-black font-mono text-white mt-1.5 block">
+                        {chartTrackerMetric === "cost" ? "$" : ""}
                         {Math.max(...trends6M.map((t: any) => t.traffic)).toLocaleString()}
+                        {chartTrackerMetric === "authority" ? "" : ""}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[9px] uppercase font-black text-gray-400 block leading-none tracking-widest">Base Floor</span>
-                      <span className="text-base font-extrabold font-mono text-gray-700 mt-1 block">
+                      <span className="text-[9px] uppercase font-black text-slate-405 block leading-none tracking-widest">Base Floor</span>
+                      <span className="text-xl font-bold font-mono text-slate-300 mt-1 block">
+                        {chartTrackerMetric === "cost" ? "$" : ""}
                         {Math.min(...trends6M.map((t: any) => t.traffic)).toLocaleString()}
+                        {chartTrackerMetric === "authority" ? "" : ""}
                       </span>
                     </div>
                   </div>
                   
                   {/* Current Month Active Status indicator */}
-                  <div className="border-t border-gray-200/60 pt-2 flex items-center justify-between text-[11px] font-sans">
-                    <span className="text-gray-400 font-bold">Jun 2026</span>
-                    <span className="font-black text-purple-600 font-mono">
-                      {data?.organicTraffic?.toLocaleString() || "N/A"}
+                  <div className="border-t border-slate-800/60 pt-3 mt-4 flex items-center justify-between text-[11px] font-sans">
+                    <span className="text-slate-400 font-extrabold uppercase text-[9px]">CURRENT JUN</span>
+                    <span className="font-extrabold text-amber-400 font-mono text-xs">
+                      {chartTrackerMetric === "cost" ? "$" : ""}
+                      {trends6M[5]?.traffic?.toLocaleString() || "N/A"}
+                      {chartTrackerMetric === "authority" ? "" : ""}
                     </span>
                   </div>
                 </div>
 
-                {/* Right Interactive SVG Chart Card */}
-                <div id="six-month-timeline-svg-wrapper" className="bg-white border border-gray-150 p-3.5 rounded-xl md:col-span-3 relative h-[145px] flex flex-col justify-end">
+                {/* Column B: Right Interactive SVG Chart Card (6/12 cols) */}
+                <div id="six-month-timeline-svg-wrapper" className="bg-white border border-gray-200 p-4 rounded-xl lg:col-span-6 relative min-h-[165px] flex flex-col justify-end shadow-2xs">
                   
                   {/* Hover Popover Tooltip */}
                   {hoveredTrendIndex !== null && (
                     <div 
                       id="six-month-hover-popover"
-                      className="absolute z-10 bg-slate-900 text-white rounded-lg p-2.5 text-[10px] shadow-lg border border-slate-800 transition-all duration-75 pointer-events-none text-sans font-sans"
+                      className="absolute z-10 bg-slate-900 text-white rounded-xl p-3 text-[10px] shadow-lg border border-slate-800 transition-all duration-75 pointer-events-none text-sans font-sans"
                       style={{
-                        left: `${Math.min(500, Math.max(10, (50 + hoveredTrendIndex * 124) - 50))}px`,
+                        left: `${Math.min(320, Math.max(10, (10 + hoveredTrendIndex * 74)))}px`,
                         top: "5px"
                       }}
                     >
-                      <div className="font-extrabold text-slate-300">{trends6M[hoveredTrendIndex].month}</div>
-                      <div className="font-black text-purple-300 font-mono text-[11px] mt-0.5">
-                        {trends6M[hoveredTrendIndex].traffic.toLocaleString()} visitors
+                      <div className="font-extrabold text-slate-350">{trends6M[hoveredTrendIndex].month}</div>
+                      <div className="font-black text-amber-400 font-mono text-xs mt-1">
+                        {chartTrackerMetric === "cost" ? "$" : ""}
+                        {trends6M[hoveredTrendIndex].traffic.toLocaleString()}
+                        {chartTrackerMetric === "authority" ? "" : ""}
+                        {chartTrackerMetric === "traffic" ? " visitors" : chartTrackerMetric === "keywords" ? " keywords" : ""}
                       </div>
-                      <div className="text-[9px] text-slate-400 mt-0.5">
+                      <div className="text-[9px] text-slate-400 mt-1">
                         {hoveredTrendIndex === 0 ? "Initial period" : (
                           () => {
                             const prev = trends6M[hoveredTrendIndex - 1].traffic;
                             const curr = trends6M[hoveredTrendIndex].traffic;
                             const diff = curr - prev;
-                            const pct = Math.round((diff / prev) * 100);
-                            return `${pct >= 0 ? "▲ +" : "▼ "}${pct}% month-over-month`;
+                            const pct = Math.round((diff / (prev || 1)) * 100);
+                            return `${pct >= 0 ? "▲ +" : "▼ "}${pct}% mom`;
                           }
                         )()}
                       </div>
                     </div>
                   )}
 
-                  <div className="w-full h-full relative">
+                  <div className="w-full h-full relative min-h-[110px]">
                     <svg className="w-full h-full" viewBox="0 0 700 120" preserveAspectRatio="none">
+                      
+                      {/* Define gradients dynamically inside markup */}
                       <defs>
-                        <linearGradient id="sixMonthAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.2" />
+                        <linearGradient id="sixMonthAreaGrad-purple" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.25" />
                           <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.0" />
+                        </linearGradient>
+                        <linearGradient id="sixMonthAreaGrad-emerald" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+                          <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                        </linearGradient>
+                        <linearGradient id="sixMonthAreaGrad-amber" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.25" />
+                          <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
+                        </linearGradient>
+                        <linearGradient id="sixMonthAreaGrad-blue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.25" />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
                         </linearGradient>
                       </defs>
 
@@ -459,20 +688,32 @@ export default function DomainOverviewView({ initialDomain = "SEOtool.com", onCo
                       <line x1="50" y1="105" x2="670" y2="105" stroke="#f1f5f9" strokeWidth="1" />
 
                       {/* Y-axis compact markers */}
-                      <text x="10" y="18" fill="#94a3b8" fontSize="8" fontWeight="bold" className="font-sans font-mono">
+                      <text x="5" y="18" fill="#94a3b8" fontSize="8" fontWeight="bold" className="font-sans font-mono text-[9px]">
+                        {chartTrackerMetric === "cost" ? "$" : ""}
                         {chartConfig.maxVal >= 1000000 
                           ? `${(chartConfig.maxVal / 1000000).toFixed(1)}M` 
-                          : `${Math.round(chartConfig.maxVal / 1000)}K`}
+                          : chartConfig.maxVal >= 1000 
+                            ? `${Math.round(chartConfig.maxVal / 1000)}K`
+                            : Math.round(chartConfig.maxVal)}
+                        {chartTrackerMetric === "authority" ? "" : ""}
                       </text>
-                      <text x="10" y="63" fill="#94a3b8" fontSize="8" fontWeight="bold" className="font-sans font-mono">
+                      <text x="5" y="63" fill="#94a3b8" fontSize="8" fontWeight="bold" className="font-sans font-mono text-[9px]">
+                        {chartTrackerMetric === "cost" ? "$" : ""}
                         {((chartConfig.maxVal + chartConfig.minVal) / 2) >= 1000000 
                           ? `${(((chartConfig.maxVal + chartConfig.minVal) / 2) / 1000000).toFixed(1)}M` 
-                          : `${Math.round(((chartConfig.maxVal + chartConfig.minVal) / 2) / 1000)}K`}
+                          : ((chartConfig.maxVal + chartConfig.minVal) / 2) >= 1000
+                            ? `${Math.round(((chartConfig.maxVal + chartConfig.minVal) / 2) / 1000)}K`
+                            : Math.round((chartConfig.maxVal + chartConfig.minVal) / 2)}
+                        {chartTrackerMetric === "authority" ? "" : ""}
                       </text>
-                      <text x="10" y="108" fill="#94a3b8" fontSize="8" fontWeight="bold" className="font-sans font-mono">
+                      <text x="5" y="108" fill="#94a3b8" fontSize="8" fontWeight="bold" className="font-sans font-mono text-[9px]">
+                        {chartTrackerMetric === "cost" ? "$" : ""}
                         {chartConfig.minVal >= 1000000 
                           ? `${(chartConfig.minVal / 1000000).toFixed(1)}M` 
-                          : `${Math.round(chartConfig.minVal / 1000)}K`}
+                          : chartConfig.minVal >= 1000
+                            ? `${Math.round(chartConfig.minVal / 1000)}K`
+                            : Math.round(chartConfig.minVal)}
+                        {chartTrackerMetric === "authority" ? "" : ""}
                       </text>
 
                       {/* Vertical guidance indicator line on hover */}
@@ -482,45 +723,79 @@ export default function DomainOverviewView({ initialDomain = "SEOtool.com", onCo
                           y1="10" 
                           x2={chartConfig.coordinates[hoveredTrendIndex].x} 
                           y2="110" 
-                          stroke="#a855f7" 
+                          stroke={chartTheme === "purple" ? "#8b5cf6" : chartTheme === "emerald" ? "#10b981" : chartTheme === "amber" ? "#f59e0b" : "#3b82f6"} 
                           strokeWidth="1.2" 
                           strokeDasharray="2 2" 
-                          opacity="0.5"
+                          opacity="0.6"
                         />
                       )}
 
-                      {/* Area gradient fill under the line path */}
-                      <path d={chartConfig.areaD} fill="url(#sixMonthAreaGrad)" />
+                      {/* SVG Visual area rendering (Area Fill Mode) */}
+                      {chartVisualMode === "area" && (
+                        <path 
+                          d={chartConfig.areaD} 
+                          fill={chartTheme === "purple" ? "url(#sixMonthAreaGrad-purple)" : chartTheme === "emerald" ? "url(#sixMonthAreaGrad-emerald)" : chartTheme === "amber" ? "url(#sixMonthAreaGrad-amber)" : "url(#sixMonthAreaGrad-blue)"} 
+                        />
+                      )}
 
-                      {/* Primary trend drawing line */}
-                      <path 
-                        d={chartConfig.lineD} 
-                        fill="none" 
-                        stroke="#8b5cf6" 
-                        strokeWidth="2.5" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                      />
+                      {/* Draw Columns rects if Visual Mode is Bar Columns */}
+                      {chartVisualMode === "bar" && (
+                        chartConfig.coordinates.map((pt, idx) => {
+                          const barHeight = Math.max(8, 105 - pt.y);
+                          const strokeColor = chartTheme === "purple" ? "#8859ec" : chartTheme === "emerald" ? "#0fa070" : chartTheme === "amber" ? "#df900b" : "#2f72dc";
+                          const fillColor = chartTheme === "purple" ? "#a78bfa" : chartTheme === "emerald" ? "#34d399" : chartTheme === "amber" ? "#fbbf24" : "#60a5fa";
+                          return (
+                            <rect
+                              key={idx}
+                              x={pt.x - 18}
+                              y={pt.y}
+                              width="36"
+                              height={barHeight}
+                              fill={hoveredTrendIndex === idx ? strokeColor : fillColor}
+                              stroke={strokeColor}
+                              strokeWidth="1"
+                              rx="3"
+                              ry="3"
+                              opacity="0.85"
+                              className="transition-all duration-150 cursor-pointer"
+                              onMouseEnter={() => setHoveredTrendIndex(idx)}
+                              onMouseLeave={() => setHoveredTrendIndex(null)}
+                            />
+                          );
+                        })
+                      )}
 
-                      {/* Focus circles and responsive drag-grids */}
-                      {chartConfig.coordinates.map((pt, idx) => (
+                      {/* Primary trend line overlay - area and line views both render the line path */}
+                      {chartVisualMode !== "bar" && (
+                        <path 
+                          d={chartConfig.lineD} 
+                          fill="none" 
+                          stroke={chartTheme === "purple" ? "#8b5cf6" : chartTheme === "emerald" ? "#10b981" : chartTheme === "amber" ? "#f59e0b" : "#3b82f6"} 
+                          strokeWidth={chartVisualMode === "line" ? "3.5" : "2.5"} 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeDasharray={chartVisualMode === "line" ? "4 2" : undefined}
+                        />
+                      )}
+
+                      {/* Focus circle dots (Line & Area Views only) */}
+                      {chartVisualMode !== "bar" && chartConfig.coordinates.map((pt, idx) => (
                         <g key={idx} className="cursor-pointer">
                           <circle 
                             cx={pt.x} 
                             cy={pt.y} 
-                            r={hoveredTrendIndex === idx ? "5.5" : "3.5"} 
-                            fill={hoveredTrendIndex === idx ? "#8b5cf6" : "#ffffff"} 
-                            stroke="#8b5cf6" 
-                            strokeWidth={hoveredTrendIndex === idx ? "2.5" : "1.8"} 
+                            r={hoveredTrendIndex === idx ? "6" : "3.5"} 
+                            fill={hoveredTrendIndex === idx ? (chartTheme === "purple" ? "#8b5cf6" : chartTheme === "emerald" ? "#10b981" : chartTheme === "amber" ? "#f59e0b" : "#3b82f6") : "#ffffff"} 
+                            stroke={chartTheme === "purple" ? "#8b5cf6" : chartTheme === "emerald" ? "#10b981" : chartTheme === "amber" ? "#f59e0b" : "#3b82f6"} 
+                            strokeWidth={hoveredTrendIndex === idx ? "3" : "1.8"} 
                             className="transition-all duration-150"
                           />
 
-                          {/* Transparent overlay for comfortable mouse hover */}
+                          {/* Hover rect coordinates wrapper */}
                           <rect 
-                            id={`six-month-hover-rect-${idx}`}
-                            x={pt.x - 25} 
+                            x={pt.x - 35} 
                             y="0" 
-                            width="50" 
+                            width="70" 
                             height="120" 
                             fill="transparent" 
                             onMouseEnter={() => setHoveredTrendIndex(idx)}
@@ -531,7 +806,7 @@ export default function DomainOverviewView({ initialDomain = "SEOtool.com", onCo
                     </svg>
 
                     {/* Timeline labels bar */}
-                    <div className="absolute bottom-[-18px] left-0 right-0 flex justify-between px-[50px] text-[9px] font-black text-gray-400 uppercase font-sans tracking-wide">
+                    <div className="absolute bottom-[-18px] left-0 right-0 flex justify-between px-[50px] text-[9px] font-black text-gray-400 uppercase font-sans tracking-wide select-none">
                       {trends6M.map((pt: any, idx: number) => (
                         <span 
                           key={idx} 
@@ -544,6 +819,71 @@ export default function DomainOverviewView({ initialDomain = "SEOtool.com", onCo
                   </div>
 
                 </div>
+
+                {/* Column C: Interactive AI suggestions checklists (3/12 cols) */}
+                <div className="bg-[#f0f4ff]/80 border border-blue-100 rounded-2xl p-4 lg:col-span-3 flex flex-col justify-between font-sans">
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2.5">
+                      <Sparkles className="w-4 h-4 text-purple-600 fill-purple-100" />
+                      <h5 className="text-[11px] font-black uppercase text-slate-800 tracking-wider">Simulated AI Suggestions</h5>
+                    </div>
+                    
+                    {/* Recommendations list */}
+                    <div className="space-y-2 text-xs">
+                      {[
+                        { id: "crawl", label: "Perform header metadata validation" },
+                        { id: "keyword", label: "Target search intent on transact terms" },
+                        { id: "link", label: "Inspect external anchor link diversity" }
+                      ].map((rec) => {
+                        const isDone = !!starredDomains.includes(`recomed-${rec.id}-${activeDomain}`);
+                        return (
+                          <label 
+                            key={rec.id}
+                            className={`flex items-start gap-2 p-2 rounded-lg bg-white border border-gray-150 shadow-2xs hover:bg-purple-50/50 transition-all cursor-pointer ${isDone ? "border-purple-200 bg-purple-50/20 text-gray-400 line-through" : "text-gray-700 font-medium"}`}
+                          >
+                            <input 
+                              type="checkbox"
+                              checked={isDone}
+                              onChange={() => {
+                                const tag = `recomed-${rec.id}-${activeDomain}`;
+                                if (isDone) {
+                                  setStarredDomains(starredDomains.filter(item => item !== tag));
+                                  toast.success(`Active suggestion unmarked.`);
+                                } else {
+                                  setStarredDomains([...starredDomains, tag]);
+                                  toast.success(`Action checked: "${rec.label}"!`);
+                                }
+                              }}
+                              className="mt-0.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 h-3.5 w-3.5 cursor-pointer"
+                            />
+                            <span className="text-[11px] leading-tight select-none">{rec.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Sweep scanner action */}
+                  <div className="pt-3 border-t border-blue-150/55 mt-3">
+                    <button
+                      onClick={() => {
+                        const tag1 = `recomed-crawl-${activeDomain}`;
+                        const tag2 = `recomed-keyword-${activeDomain}`;
+                        const tag3 = `recomed-link-${activeDomain}`;
+                        setStarredDomains([...starredDomains.filter(d => d !== tag1 && d !== tag2 && d !== tag3), tag1, tag2, tag3]);
+                        
+                        toast.info("Running technical audit sweeping algorithms...");
+                        setTimeout(() => {
+                          toast.success("Completed! All checklist suggestions verified and saved.");
+                        }, 1100);
+                      }}
+                      className="w-full bg-white hover:bg-purple-600 hover:text-white border border-purple-200 text-purple-700 font-extrabold text-[10px] uppercase tracking-wider py-2.5 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer shadow-3xs"
+                    >
+                      Audit Scan All
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
