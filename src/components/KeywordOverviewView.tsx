@@ -110,33 +110,46 @@ export default function KeywordOverviewView() {
   // Fetch complete SEO data from the backend
   const fetchSeoData = async (word: string, country: string, device: string) => {
     setIsLoading(true);
-    try {
-      const resp = await fetch(`/api/seo/keyword-overview?keyword=${encodeURIComponent(word)}&country=${country}&device=${device}`);
-      
-      const contentType = resp.headers.get("content-type") || "";
-      if (!resp.ok) {
-        let errMsg = "Failed to load metrics from the backend.";
-        if (contentType.includes("application/json")) {
-          try {
-            const errJson = await resp.json();
-            errMsg = errJson.details || errJson.error || errMsg;
-          } catch (_) {}
+    const maxRetries = 3;
+    let attempt = 0;
+
+    while (attempt < maxRetries) {
+      try {
+        const resp = await fetch(`/api/seo/keyword-overview?keyword=${encodeURIComponent(word)}&country=${country}&device=${device}`);
+        
+        const contentType = resp.headers.get("content-type") || "";
+        if (!resp.ok) {
+          let errMsg = "Failed to load metrics from the backend.";
+          if (contentType.includes("application/json")) {
+            try {
+              const errJson = await resp.json();
+              errMsg = errJson.details || errJson.error || errMsg;
+            } catch (_) {}
+          }
+          throw new Error(errMsg);
         }
-        throw new Error(errMsg);
-      }
 
-      if (!contentType.includes("application/json")) {
-        throw new Error("The server returned an unexpected non-JSON response. Please try again in a few moments.");
-      }
+        if (!contentType.includes("application/json")) {
+          throw new Error("The server returned an unexpected non-JSON response. Please try again in a few moments.");
+        }
 
-      const data = await resp.json();
-      setSeoPayload(data);
-      setIsCached(!!data.apiCached);
-    } catch (err: any) {
-      console.error("[FetchError] SEO parameters failed:", err);
-    } finally {
-      setIsLoading(false);
+        const data = await resp.json();
+        setSeoPayload(data);
+        setIsCached(!!data.apiCached);
+        setIsLoading(false);
+        return; // Success, break out of loop
+      } catch (err: any) {
+        attempt++;
+        console.warn(`[FetchSeoData] Attempt ${attempt} failed:`, err.message);
+        if (attempt >= maxRetries) {
+          console.error("[FetchError] SEO parameters failed:", err);
+        } else {
+          // exponential backoff
+          await new Promise(resolve => setTimeout(resolve, attempt * 600));
+        }
+      }
     }
+    setIsLoading(false);
   };
 
   // Fetch search history records

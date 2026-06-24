@@ -171,33 +171,46 @@ export default function DomainOverviewView({ initialDomain = "SEOtool.com", onCo
   const fetchDomainData = async (domain: string) => {
     setLoading(true);
     setError(null);
-    try {
-      const resp = await fetch(`/api/seo/domain-overview?domain=${encodeURIComponent(domain)}`);
-      
-      const contentType = resp.headers.get("content-type") || "";
-      if (!resp.ok) {
-        let errMsg = "Unable to retrieve analytical intelligence for that domain.";
-        if (contentType.includes("application/json")) {
-          try {
-            const errJson = await resp.json();
-            errMsg = errJson.details || errJson.error || errMsg;
-          } catch (_) {}
+    const maxRetries = 3;
+    let attempt = 0;
+    
+    while (attempt < maxRetries) {
+      try {
+        const resp = await fetch(`/api/seo/domain-overview?domain=${encodeURIComponent(domain)}`);
+        
+        const contentType = resp.headers.get("content-type") || "";
+        if (!resp.ok) {
+          let errMsg = "Unable to retrieve analytical intelligence for that domain.";
+          if (contentType.includes("application/json")) {
+            try {
+              const errJson = await resp.json();
+              errMsg = errJson.details || errJson.error || errMsg;
+            } catch (_) {}
+          }
+          throw new Error(errMsg);
         }
-        throw new Error(errMsg);
-      }
 
-      if (!contentType.includes("application/json")) {
-        throw new Error("The server returned an unexpected non-JSON response. This usually indicates that the development server is starting up or has experienced a gateway interruption. Please try again in a few moments.");
-      }
+        if (!contentType.includes("application/json")) {
+          throw new Error("The server returned an unexpected non-JSON response. This usually indicates that the development server is starting up or has experienced a gateway interruption. Please try again in a few moments.");
+        }
 
-      const json = await resp.json();
-      setData(json);
-      setTopicsList([]); // Reset topic generator on new search
-    } catch (err: any) {
-      setError(err.message || "Network error. Please try again.");
-    } finally {
-      setLoading(false);
+        const json = await resp.json();
+        setData(json);
+        setTopicsList([]); // Reset topic generator on new search
+        setLoading(false);
+        return; // Success, break out of loop
+      } catch (err: any) {
+        attempt++;
+        console.warn(`[FetchDomainData] Attempt ${attempt} failed:`, err.message);
+        if (attempt >= maxRetries) {
+          setError(err.message || "Network error. Please try again.");
+        } else {
+          // exponential backoff
+          await new Promise(resolve => setTimeout(resolve, attempt * 600));
+        }
+      }
     }
+    setLoading(false);
   };
 
   useEffect(() => {
