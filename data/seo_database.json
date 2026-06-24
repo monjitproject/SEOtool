@@ -1,0 +1,185 @@
+{
+  "keywords": [
+    {
+      "id": "kw_aeqsdfvm2",
+      "keyword": "education",
+      "language": "en",
+      "country": "IN",
+      "created_at": "2026-06-24T03:18:54.343Z"
+    }
+  ],
+  "keyword_metrics": [
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "search_volume": "4K",
+      "search_volume_val": 4040,
+      "global_volume": "15.4K",
+      "global_volume_val": 15352,
+      "cpc": "$0.75",
+      "competition": "0.48",
+      "difficulty": 44,
+      "kd_label": "Medium",
+      "kd_description": "Possible to rank. It will require consistent backlinks, keyword-optimized landing structures, and structural headers.",
+      "intent": [
+        "Informational",
+        "Navigational"
+      ],
+      "updated_at": "2026-06-24T03:18:54.344Z",
+      "confidence_score": 90,
+      "source_attribution": "Consensus Model: DataForSEO (40%) • Historical (0%) • Trends (20%) • SERP (10%)"
+    }
+  ],
+  "keyword_trends": [
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 0,
+      "volume": 36,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 1,
+      "volume": 45,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 2,
+      "volume": 41,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 3,
+      "volume": 54,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 4,
+      "volume": 50,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 5,
+      "volume": 59,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 6,
+      "volume": 68,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 7,
+      "volume": 72,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 8,
+      "volume": 86,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 9,
+      "volume": 90,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 10,
+      "volume": 77,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "month_index": 11,
+      "volume": 81,
+      "updated_at": "2026-06-24T03:18:54.344Z"
+    }
+  ],
+  "serp_results": [
+    {
+      "position": 1,
+      "title": "Detailed insights on education",
+      "url": "https://www.authority-education.org/overview",
+      "domain": "authority-education.org",
+      "has_image": true,
+      "is_video_carousel": false,
+      "authority_score": 75,
+      "ref_domains": "6K",
+      "backlinks": "250K",
+      "traffic": "15K",
+      "keywords_count": 15000,
+      "id": "serp_eveghzhbb",
+      "keyword_id": "kw_aeqsdfvm2",
+      "created_at": "2026-06-24T03:18:54.345Z"
+    }
+  ],
+  "serp_features": [
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "feature_name": "Sitelinks",
+      "detected": true,
+      "created_at": "2026-06-24T03:18:54.345Z"
+    },
+    {
+      "keyword_id": "kw_aeqsdfvm2",
+      "feature_name": "AdWords",
+      "detected": true,
+      "created_at": "2026-06-24T03:18:54.345Z"
+    }
+  ],
+  "search_history": [
+    {
+      "id": "hist_l4agv9yei",
+      "keyword": "education",
+      "country": "IN",
+      "device": "Desktop",
+      "searched_at": "2026-06-24T03:18:51.328Z"
+    }
+  ],
+  "serp_snapshots": [
+    {
+      "id": "snap_yy5g09vv7",
+      "keyword_id": "kw_aeqsdfvm2",
+      "raw_json": "{\"keyword\":\"education\",\"volume\":\"4K\",\"features\":[\"Sitelinks\",\"AdWords\"],\"rankings\":[{\"position\":1,\"title\":\"Detailed insights on education\",\"url\":\"https://www.authority-education.org/overview\",\"domain\":\"authority-education.org\",\"hasImage\":true,\"as\":75,\"refDomains\":\"6K\",\"backlinks\":\"250K\",\"traffic\":\"15K\",\"keywordsCount\":15000}]}",
+      "confidence": 90,
+      "source_attribution": "Consensus Model: DataForSEO (40%) • Historical (0%) • Trends (20%) • SERP (10%)",
+      "created_at": "2026-06-24T03:18:54.345Z"
+    }
+  ],
+  "ranking_history": [
+    {
+      "id": "rank_7vmkdxysh",
+      "keyword_id": "kw_aeqsdfvm2",
+      "domain": "authority-education.org",
+      "position": 1,
+      "tracked_date": "2026-06-24T03:18:54.345Z"
+    }
+  ],
+  "backlink_history": [
+    {
+      "id": "bl_j9de6ezbv",
+      "domain": "education.com",
+      "backlinks_count": 137360,
+      "referring_domains": 336.6666666666667,
+      "tracked_date": "2026-06-24T03:18:54.345Z"
+    }
+  ],
+  "keyword_history": [
+    {
+      "id": "kwh_brslzgkl8",
+      "keyword_id": "kw_aeqsdfvm2",
+      "search_volume": 4040,
+      "cpc": 0.75,
+      "difficulty": 44,
+      "tracked_date": "2026-06-24T03:18:54.344Z"
+    }
+  ]
+}
