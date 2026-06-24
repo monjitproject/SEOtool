@@ -25,18 +25,39 @@ export async function generateContentWithRetry(
     "gemini-flash-latest"
   ];
 
+  const globalTimeoutMs = 6500; // 6.5 seconds total limit to prevent gateway timeout
+  const startTime = Date.now();
   let lastError: any = null;
 
   for (const model of modelsToTry) {
     // We will attempt up to 2 times per model if we get a transient indicator like 503 or 429
     for (let attempt = 1; attempt <= 2; attempt++) {
+      const elapsed = Date.now() - startTime;
+      const remainingTime = globalTimeoutMs - elapsed;
+
+      // If we don't have enough time left for a meaningful attempt (at least 1.5s), fail fast
+      if (remainingTime < 1500) {
+        throw lastError || new Error(`Gemini API total execution time exceeded global limit of ${globalTimeoutMs}ms`);
+      }
+
+      // Per-attempt timeout is the minimum of 3.5s and the remaining global time
+      const attemptTimeoutMs = Math.min(3500, remainingTime);
+
       try {
-        console.log(`[GEMINI HELPER] [${tag}] Attempting model list resolution - Model: ${model}, Attempt: ${attempt}/2`);
-        const response = await ai.models.generateContent({
+        console.log(`[GEMINI HELPER] [${tag}] Attempting model list resolution - Model: ${model}, Attempt: ${attempt}/2 (Timeout: ${attemptTimeoutMs}ms)`);
+        let timerId: any;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timerId = setTimeout(() => reject(new Error(`Gemini API request timed out (${attemptTimeoutMs}ms limit exceeded)`)), attemptTimeoutMs);
+        });
+
+        const generatePromise = ai.models.generateContent({
           model: model,
           contents: prompt,
           config: config
         });
+
+        const response = await Promise.race([generatePromise, timeoutPromise]);
+        clearTimeout(timerId);
 
         // If response is valid, return it
         if (response && (response.text || response.candidates)) {
@@ -58,8 +79,15 @@ export async function generateContentWithRetry(
 
         if (isTransient && attempt < 2) {
           const backoff = attempt * 300; // wait 300ms, then 600ms
-          console.log(`[GEMINI HELPER] [${tag}] Transient error detected. Cooling down for ${backoff}ms...`);
-          await delay(backoff);
+          // Check if we have enough remaining time to wait and then retry
+          const currentElapsed = Date.now() - startTime;
+          if (globalTimeoutMs - currentElapsed > backoff + 1500) {
+            console.log(`[GEMINI HELPER] [${tag}] Transient error detected. Cooling down for ${backoff}ms...`);
+            await delay(backoff);
+          } else {
+            console.log(`[GEMINI HELPER] [${tag}] Insufficient time left to perform backoff/retry. Skipping to next model.`);
+            break;
+          }
         } else {
           // Break inner loop to try the next fallback model from the outer modelsToTry sequence
           break;

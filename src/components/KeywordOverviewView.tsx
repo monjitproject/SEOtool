@@ -112,13 +112,27 @@ export default function KeywordOverviewView() {
     setIsLoading(true);
     try {
       const resp = await fetch(`/api/seo/keyword-overview?keyword=${encodeURIComponent(word)}&country=${country}&device=${device}`);
+      
+      const contentType = resp.headers.get("content-type") || "";
       if (!resp.ok) {
-        throw new Error("Failed to load metrics from the backend.");
+        let errMsg = "Failed to load metrics from the backend.";
+        if (contentType.includes("application/json")) {
+          try {
+            const errJson = await resp.json();
+            errMsg = errJson.details || errJson.error || errMsg;
+          } catch (_) {}
+        }
+        throw new Error(errMsg);
       }
+
+      if (!contentType.includes("application/json")) {
+        throw new Error("The server returned an unexpected non-JSON response. Please try again in a few moments.");
+      }
+
       const data = await resp.json();
       setSeoPayload(data);
       setIsCached(!!data.apiCached);
-    } catch (err) {
+    } catch (err: any) {
       console.error("[FetchError] SEO parameters failed:", err);
     } finally {
       setIsLoading(false);

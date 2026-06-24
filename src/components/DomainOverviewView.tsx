@@ -173,9 +173,23 @@ export default function DomainOverviewView({ initialDomain = "SEOtool.com", onCo
     setError(null);
     try {
       const resp = await fetch(`/api/seo/domain-overview?domain=${encodeURIComponent(domain)}`);
+      
+      const contentType = resp.headers.get("content-type") || "";
       if (!resp.ok) {
-        throw new Error("Unable to retrieve analytical intelligence for that domain.");
+        let errMsg = "Unable to retrieve analytical intelligence for that domain.";
+        if (contentType.includes("application/json")) {
+          try {
+            const errJson = await resp.json();
+            errMsg = errJson.details || errJson.error || errMsg;
+          } catch (_) {}
+        }
+        throw new Error(errMsg);
       }
+
+      if (!contentType.includes("application/json")) {
+        throw new Error("The server returned an unexpected non-JSON response. This usually indicates that the development server is starting up or has experienced a gateway interruption. Please try again in a few moments.");
+      }
+
       const json = await resp.json();
       setData(json);
       setTopicsList([]); // Reset topic generator on new search
