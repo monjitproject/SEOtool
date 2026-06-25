@@ -28,6 +28,7 @@ export enum ActiveView {
   Settings = "settings",
   ProjectPlan = "project-plan",
   EnterpriseMonitor = "enterprise-monitor",
+  SeoUrlSuite = "seo-url-suite",
   // Content & AI
   TopicResearch = "topic-research",
   SeoContentTemplate = "seo-content-template",

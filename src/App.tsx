@@ -20,6 +20,7 @@ import BillingView from "./components/BillingView";
 import SettingsView from "./components/SettingsView";
 import ProjectPlanView from "./components/ProjectPlanView";
 import EnterpriseMonitorView from "./components/EnterpriseMonitorView";
+import SeoUrlSuiteView from "./components/SeoUrlSuiteView";
 import HeaderSearch from "./components/HeaderSearch";
 import ToastContainer from "./components/ToastContainer";
 import { 
@@ -125,6 +126,9 @@ export default function App() {
 
       case ActiveView.EnterpriseMonitor:
         return <EnterpriseMonitorView />;
+
+      case ActiveView.SeoUrlSuite:
+        return <SeoUrlSuiteView />;
 
       default:
         return (

@@ -52,6 +52,14 @@ export default function HeaderSearch({ onSelectView, activeView }: HeaderSearchP
       icon: <LayoutDashboard className="w-4 h-4 text-slate-500" />
     },
     {
+      id: ActiveView.SeoUrlSuite,
+      name: "SEO URL Architecture",
+      category: "SEO Analysis",
+      description: "Manage clean URLs, sitemaps, robots.txt, schema, and redirects",
+      keywords: ["url", "routing", "seo", "redirect", "sitemap", "robots", "schema", "architecture"],
+      icon: <Link2 className="w-4 h-4 text-purple-500" />
+    },
+    {
       id: ActiveView.DomainOverview,
       name: "Domain Overview",
       category: "SEO Analysis",

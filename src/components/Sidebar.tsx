@@ -95,6 +95,7 @@ export default function Sidebar({
   const getActiveGroup = (): "SEO" | "Site Performance" | "Competitive Analysis" | "Keyword Research" | "Content Ideas" | "Link Building" | "Account" => {
     switch (activeView) {
       case ActiveView.Dashboard:
+      case ActiveView.SeoUrlSuite:
         return "SEO";
       case ActiveView.SiteAudit:
       case ActiveView.PositionTracking:
@@ -322,6 +323,7 @@ export default function Sidebar({
                   className="space-y-0.5 mt-1 overflow-hidden"
                 >
                   {renderSubItem(ActiveView.Dashboard, "Dashboard")}
+                  {renderSubItem(ActiveView.SeoUrlSuite, "URL Architecture")}
                 </motion.div>
               )}
             </AnimatePresence>
