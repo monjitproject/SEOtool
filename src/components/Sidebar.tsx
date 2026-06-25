@@ -96,6 +96,7 @@ export default function Sidebar({
     switch (activeView) {
       case ActiveView.Dashboard:
       case ActiveView.SeoUrlSuite:
+      case ActiveView.PublisherCenter:
         return "SEO";
       case ActiveView.SiteAudit:
       case ActiveView.PositionTracking:
@@ -324,6 +325,7 @@ export default function Sidebar({
                 >
                   {renderSubItem(ActiveView.Dashboard, "Dashboard")}
                   {renderSubItem(ActiveView.SeoUrlSuite, "URL Architecture")}
+                  {renderSubItem(ActiveView.PublisherCenter, "Publisher Suite")}
                 </motion.div>
               )}
             </AnimatePresence>

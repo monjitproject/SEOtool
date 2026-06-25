@@ -18,7 +18,8 @@ import {
   Settings, 
   CreditCard,
   Map,
-  Link2
+  Link2,
+  ShieldCheck
 } from "lucide-react";
 
 interface SearchableItem {
@@ -58,6 +59,14 @@ export default function HeaderSearch({ onSelectView, activeView }: HeaderSearchP
       description: "Manage clean URLs, sitemaps, robots.txt, schema, and redirects",
       keywords: ["url", "routing", "seo", "redirect", "sitemap", "robots", "schema", "architecture"],
       icon: <Link2 className="w-4 h-4 text-purple-500" />
+    },
+    {
+      id: ActiveView.PublisherCenter,
+      name: "Publisher & AdSense Suite",
+      category: "SEO Analysis",
+      description: "Manage legal policies, sitemaps, authors, blog section, and AdSense readiness reports",
+      keywords: ["adsense", "blog", "legal", "compliance", "policy", "privacy", "terms", "about", "author", "dmca", "sitemap", "robots", "faq"],
+      icon: <ShieldCheck className="w-4 h-4 text-emerald-500" />
     },
     {
       id: ActiveView.DomainOverview,

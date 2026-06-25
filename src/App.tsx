@@ -21,6 +21,7 @@ import SettingsView from "./components/SettingsView";
 import ProjectPlanView from "./components/ProjectPlanView";
 import EnterpriseMonitorView from "./components/EnterpriseMonitorView";
 import SeoUrlSuiteView from "./components/SeoUrlSuiteView";
+import PublisherCenterView from "./components/PublisherCenterView";
 import HeaderSearch from "./components/HeaderSearch";
 import ToastContainer from "./components/ToastContainer";
 import { 
@@ -129,6 +130,9 @@ export default function App() {
 
       case ActiveView.SeoUrlSuite:
         return <SeoUrlSuiteView />;
+
+      case ActiveView.PublisherCenter:
+        return <PublisherCenterView />;
 
       default:
         return (
